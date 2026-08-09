@@ -20,7 +20,7 @@ import ar from "../../assets/icologo.png";
 import { RiTwitterXLine } from "react-icons/ri";
 import { FaFacebookF, FaInstagram, FaLinkedinIn } from "react-icons/fa";
 import API_URL from "../../config.js";
-import banner from "../../assets/bannerImage.png";
+import banner from "../../assets/bannerimage.png";
 import PropertyCard from "../../components/common/PropertyCard.jsx";
 
 const Landing = () => {
