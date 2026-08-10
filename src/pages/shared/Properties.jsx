@@ -30,7 +30,7 @@ const Properties = () => {
     city: "",
     propertyType: [],
     bhk: "",
-    maxPrice: 100000000,
+    maxPrice: 1000000000,
     amenities: [],
     furnishing: [],
     sort: "latest",
