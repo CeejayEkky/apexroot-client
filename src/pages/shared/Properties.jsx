@@ -30,7 +30,7 @@ const Properties = () => {
     city: "",
     propertyType: [],
     bhk: "",
-    maxPrice: 100000000000,
+    maxPrice: 10000000000,
     amenities: [],
     furnishing: [],
     sort: "latest",
@@ -190,7 +190,7 @@ const Properties = () => {
       city: "",
       propertyType: [],
       bhk: "",
-      maxPrice: 100000000000,
+      maxPrice: 10000000000,
       amenities: [],
       furnishing: [],
       sort: "latest", // latest entry sort will be first shown
@@ -264,8 +264,8 @@ const Properties = () => {
                 <div className={s.priceHeader}>
                   <label className={s.filterLabel}>Price Range</label>
                   <span className={s.priceValue}>
-                    {filters.maxPrice >= 100000000000
-                      ? `₦${(filters.maxPrice / 100000000000).toFixed(1)} B`
+                    {filters.maxPrice >= 1000000000
+                      ? `₦${(filters.maxPrice / 1000000000).toFixed(1)} B`
                       : filters.maxPrice >= 1000000
                         ? `₦${(filters.maxPrice / 1000000).toFixed(1)} M`
                         : `₦${(filters.maxPrice / 1000).toFixed(0)} K`}
@@ -274,7 +274,7 @@ const Properties = () => {
                 <input
                   type="range"
                   min="100000"
-                  max="100000000000"
+                  max="10000000000"
                   step="5000000"
                   value={filters.maxPrice}
                   onChange={handlePriceChange}
@@ -282,7 +282,7 @@ const Properties = () => {
                 />
                 <div className={s.priceLabels}>
                   <span>₦100K</span>
-                  <span>₦1B</span>
+                  <span>₦10B</span>
                 </div>
               </div>
 
