@@ -2,11 +2,18 @@ import React, { useEffect, useRef, useState } from "react";
 import { propertiesStyles as s } from "../../assets/dummyStyles";
 import Navbar from "../../components/common/Navbar";
 import { useAuth } from "../../context/AuthContext";
-import { HiAdjustments, HiFilter, HiSearch, HiViewGrid, HiViewList, HiX } from "react-icons/hi";
+import {
+  HiAdjustments,
+  HiFilter,
+  HiSearch,
+  HiViewGrid,
+  HiViewList,
+  HiX,
+} from "react-icons/hi";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import API_URL from "../../config";
-import PropertyCard from '../../components/common/PropertyCard'
+import PropertyCard from "../../components/common/PropertyCard";
 
 const Properties = () => {
   const navigate = useNavigate();
@@ -183,7 +190,7 @@ const Properties = () => {
       city: "",
       propertyType: [],
       bhk: "",
-      maxPrice: 100000000,
+      maxPrice: 1000000000,
       amenities: [],
       furnishing: [],
       sort: "latest", // latest entry sort will be first shown
@@ -257,23 +264,25 @@ const Properties = () => {
                 <div className={s.priceHeader}>
                   <label className={s.filterLabel}>Price Range</label>
                   <span className={s.priceValue}>
-                    {filters.maxPrice >= 1000000
-                      ? `₦${(filters.maxPrice / 1000000).toFixed(1)} M`
-                      : `₦${(filters.maxPrice / 1000).toFixed(0)} K`}
+                    {filters.maxPrice >= 1000000000
+                      ? `₦${(filters.maxPrice / 1000000000).toFixed(1)} B`
+                      : filters.maxPrice >= 1000000
+                        ? `₦${(filters.maxPrice / 1000000).toFixed(1)} M`
+                        : `₦${(filters.maxPrice / 1000).toFixed(0)} K`}
                   </span>
                 </div>
                 <input
                   type="range"
                   min="100000"
-                  max="100000000"
-                  step="500000"
+                  max="1000000000"
+                  step="5000000"
                   value={filters.maxPrice}
                   onChange={handlePriceChange}
                   className={s.priceSlider}
                 />
                 <div className={s.priceLabels}>
                   <span>₦100K</span>
-                  <span>₦100M</span>
+                  <span>₦1B</span>
                 </div>
               </div>
 
@@ -370,7 +379,6 @@ const Properties = () => {
                     <option value="priceLow">Price: Low to High</option>
                     <option value="priceHigh">Price: High to Low</option>
                   </select>
-          
                 </div>
               </div>
             </div>
@@ -382,13 +390,13 @@ const Properties = () => {
                 ))}
               </div>
             ) : error ? (
-                <div className={s.errorContainer}>
-                  <HiX size={48} className={s.errorIcon} />
-                  <h3 className={s.errorTitle}>{error}</h3>
-                  <button onClick={applyFilters} className={s.errorButton}>
-                    Try Again!
-                  </button>
-                </div>
+              <div className={s.errorContainer}>
+                <HiX size={48} className={s.errorIcon} />
+                <h3 className={s.errorTitle}>{error}</h3>
+                <button onClick={applyFilters} className={s.errorButton}>
+                  Try Again!
+                </button>
+              </div>
             ) : properties.length === 0 ? (
               <div className={s.emptyContainer}>
                 <div className={s.emptyIconWrapper}>
@@ -401,19 +409,30 @@ const Properties = () => {
                 </button>
               </div>
             ) : (
-              <div className={`${s.propertyList} ${viewMode === "grid" ? s.propertyListGrid : s.propertyListList}`}>
-                {properties.filter((p) => p).map((p) => (
-                  <PropertyCard key={p._id} property={p} isWishlisted={wishlistedIds.includes(String(p._id))}
-                  onToggleWishlist={handleToggleWishlist} />
-                ))}
+              <div
+                className={`${s.propertyList} ${viewMode === "grid" ? s.propertyListGrid : s.propertyListList}`}
+              >
+                {properties
+                  .filter((p) => p)
+                  .map((p) => (
+                    <PropertyCard
+                      key={p._id}
+                      property={p}
+                      isWishlisted={wishlistedIds.includes(String(p._id))}
+                      onToggleWishlist={handleToggleWishlist}
+                    />
+                  ))}
               </div>
             )}
           </main>
         </div>
       </div>
 
-      {showMobileFilters &&  (
-        <div onClick={() => setShowMobileFilters(false)} className={s.mobileOverlay} />
+      {showMobileFilters && (
+        <div
+          onClick={() => setShowMobileFilters(false)}
+          className={s.mobileOverlay}
+        />
       )}
     </div>
   );
