@@ -32,6 +32,18 @@ const ProtectedRoute = ({ allowedRoles, requireSubscription = false }) => {
     return <Navigate to="/" replace />;
   }
 
+  if (
+    user &&
+    requireSubscription &&
+    user.role === "seller" &&
+    (!user.subscription ||
+      user.subscription.status !== "active" ||
+      !user.subscription.expiresAt ||
+      new Date(user.subscription.expiresAt) <= new Date())
+  ) {
+    return <Navigate to="/subscription" replace />;
+  }
+
   // 🔐 SELLER SUBSCRIPTION CHECK
   if (requireSubscription) {
     const subscription = user?.subscription;

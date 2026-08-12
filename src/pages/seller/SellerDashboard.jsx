@@ -19,8 +19,10 @@ import { Link } from "react-router-dom";
 import PropertyCard from "../../components/common/PropertyCard";
 
 const SellerDashboard = () => {
-  const { logout, token } = useAuth();
+  const { logout, token, user, refreshUser } = useAuth();
+
   const [subscriptionError, setSubscriptionError] = useState(false);
+
   const [status, setStatus] = useState({
     totalProperties: 0,
     activeListings: 0,
@@ -34,25 +36,99 @@ const SellerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
+  /*
+  |--------------------------------------------------------------------------
+  | SUBSCRIPTION INFORMATION
+  |--------------------------------------------------------------------------
+  */
+
+  const subscription = user?.subscription;
+
+  const currentPlan = subscription?.plan || "free";
+
+  const propertyLimit = subscription?.propertyLimit ?? 4;
+
+  const propertyCount =
+    status.totalProperties || properties.length || 0;
+
+  const remainingProperties = Math.max(
+    propertyLimit - propertyCount,
+    0,
+  );
+
+  const subscriptionActive =
+    subscription?.status === "active" &&
+    subscription?.expiresAt &&
+    new Date(subscription.expiresAt) > new Date();
+
+  const subscriptionExpired =
+    subscription?.status === "expired" ||
+    subscription?.status === "cancelled" ||
+    (
+      subscription?.expiresAt &&
+      new Date(subscription.expiresAt) <= new Date()
+    );
+
+  /*
+  |--------------------------------------------------------------------------
+  | FETCH DASHBOARD DATA
+  |--------------------------------------------------------------------------
+  */
+
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true);
+        setSubscriptionError(false);
+
         const [statusRes, propsRes, inqRes] = await Promise.all([
           axios.get(`${API_URL}/api/property/seller/dashboard`, {
-            headers: { Authorization: `Bearer ${token}` },
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           }),
+
           axios.get(`${API_URL}/api/property/my`, {
-            headers: { Authorization: `Bearer ${token}` },
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           }),
+
           axios.get(`${API_URL}/api/inquiry/seller`, {
-            headers: { Authorization: `Bearer ${token}` },
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           }),
         ]);
-        setStatus(statusRes.data.status || statusRes.data);
+
+        /*
+        |--------------------------------------------------------------------------
+        | DASHBOARD STATS
+        |--------------------------------------------------------------------------
+        */
+
+        setStatus(
+          statusRes.data.status || statusRes.data,
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | PROPERTIES
+        |--------------------------------------------------------------------------
+        */
+
         const props = Array.isArray(propsRes.data)
           ? propsRes.data
           : propsRes.data.properties || [];
+
         setProperties(props);
+
+        /*
+        |--------------------------------------------------------------------------
+        | INQUIRIES
+        |--------------------------------------------------------------------------
+        */
+
         setInquiries(
           Array.isArray(inqRes.data.inquiries)
             ? inqRes.data.inquiries.slice(0, 3)
@@ -60,9 +136,20 @@ const SellerDashboard = () => {
               ? inqRes.data.slice(0, 3)
               : [],
         );
+
         setLoading(false);
       } catch (error) {
-        console.error("Failed to load dashboard data:", error);
+        console.error(
+          "Failed to load dashboard data:",
+          error,
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | SUBSCRIPTION REQUIRED
+        |--------------------------------------------------------------------------
+        */
+
         if (
           error.response?.status === 403 &&
           error.response?.data?.subscriptionRequired
@@ -73,24 +160,90 @@ const SellerDashboard = () => {
         setLoading(false);
       }
     };
-    fetchData();
+
+    if (token) {
+      fetchData();
+    }
   }, [token]);
 
+  /*
+  |--------------------------------------------------------------------------
+  | REFRESH USER SUBSCRIPTION DATA
+  |--------------------------------------------------------------------------
+  */
+
+  useEffect(() => {
+    if (token && refreshUser) {
+      refreshUser();
+    }
+  }, [token]);
+
+  /*
+  |--------------------------------------------------------------------------
+  | DELETE PROPERTY
+  |--------------------------------------------------------------------------
+  */
+
   const hndleDel = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this listing?"))
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this listing?",
+      )
+    ) {
       return;
+    }
+
     try {
-      await axios.delete(`${API_URL}/api/property/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setProperties(properties.filter((p) => p._id !== id));
+      await axios.delete(
+        `${API_URL}/api/property/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      setProperties(
+        properties.filter((p) => p._id !== id),
+      );
+
+      setStatus((prev) => ({
+        ...prev,
+        totalProperties: Math.max(
+          (prev.totalProperties || 0) - 1,
+          0,
+        ),
+      }));
     } catch (error) {
-      alert("Failed to delete property.");
+      console.error(
+        "Failed to delete property:",
+        error,
+      );
+
+      if (
+        error.response?.status === 403 &&
+        error.response?.data?.subscriptionRequired
+      ) {
+        setSubscriptionError(true);
+        return;
+      }
+
+      alert(
+        error.response?.data?.message ||
+          "Failed to delete property.",
+      );
     }
   };
 
+  /*
+  |--------------------------------------------------------------------------
+  | UPDATE PROPERTY STATUS
+  |--------------------------------------------------------------------------
+  */
+
   const handleStastsUpd = async (id, curStatus) => {
-    const newStatus = curStatus === "sold" ? "sale" : "sold";
+    const newStatus =
+      curStatus === "sold" ? "sale" : "sold";
 
     try {
       await axios.patch(
@@ -99,20 +252,59 @@ const SellerDashboard = () => {
           status: newStatus,
         },
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
       );
 
       setProperties(
-        properties.map((p) => (p._id === id ? { ...p, status: newStatus } : p)),
+        properties.map((p) =>
+          p._id === id
+            ? {
+                ...p,
+                status: newStatus,
+              }
+            : p,
+        ),
       );
     } catch (error) {
-      alert("Failed to update status.");
+      console.error(
+        "Failed to update status:",
+        error,
+      );
+
+      if (
+        error.response?.status === 403 &&
+        error.response?.data?.subscriptionRequired
+      ) {
+        setSubscriptionError(true);
+        return;
+      }
+
+      alert(
+        error.response?.data?.message ||
+          "Failed to update status.",
+      );
     }
   };
 
+  /*
+  |--------------------------------------------------------------------------
+  | EXPORT PROPERTIES
+  |--------------------------------------------------------------------------
+  */
+
   const handleExport = () => {
-    const headers = ["Title", "Location", "Type", "Price", "Status", "Views"];
+    const headers = [
+      "Title",
+      "Location",
+      "Type",
+      "Price",
+      "Status",
+      "Views",
+    ];
+
     const csvRows = properties.map((p) => [
       p.title,
       `${p.area}, ${p.city}`,
@@ -122,31 +314,68 @@ const SellerDashboard = () => {
       p.views || 0,
     ]);
 
-    const csvContent = [headers, ...csvRows].map((e) => e.join(",")).join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const csvContent = [headers, ...csvRows]
+      .map((e) => e.join(","))
+      .join("\n");
+
+    const blob = new Blob(
+      [csvContent],
+      {
+        type: "text/csv;charset=utf-8;",
+      },
+    );
+
     const link = document.createElement("a");
+
     const url = URL.createObjectURL(blob);
+
     link.setAttribute("href", url);
-    link.setAttribute("download", "property_listings.csv");
+    link.setAttribute(
+      "download",
+      "property_listings.csv",
+    );
+
     link.style.visibility = "hidden";
+
     document.body.appendChild(link);
+
     link.click();
+
     document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
   };
 
-  if (loading)
+  /*
+  |--------------------------------------------------------------------------
+  | LOADING
+  |--------------------------------------------------------------------------
+  */
+
+  if (loading) {
     return (
       <div className="loader-full-page">
         <div className="loader"></div>
       </div>
     );
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | SUBSCRIPTION ERROR SCREEN
+  |--------------------------------------------------------------------------
+  */
 
   if (subscriptionError) {
     return (
       <div className="flex min-h-[70vh] items-center justify-center px-4">
         <div className="w-full max-w-lg rounded-2xl bg-white p-8 text-center shadow-lg">
+
           <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-amber-100">
-            <HiOutlineLibrary size={30} className="text-amber-600" />
+            <HiOutlineLibrary
+              size={30}
+              className="text-amber-600"
+            />
           </div>
 
           <h1 className="text-2xl font-bold text-slate-900">
@@ -154,8 +383,9 @@ const SellerDashboard = () => {
           </h1>
 
           <p className="mt-3 text-slate-600">
-            Your seller subscription is inactive or has expired. Renew your
-            subscription to access your seller dashboard and manage your
+            Your seller subscription is inactive or has
+            expired. Renew your subscription to access
+            your seller dashboard and manage your
             properties.
           </p>
 
@@ -170,228 +400,540 @@ const SellerDashboard = () => {
     );
   }
 
+  /*
+  |--------------------------------------------------------------------------
+  | STAT CARDS
+  |--------------------------------------------------------------------------
+  */
+
   const statCards = [
     {
       title: "Total Views",
-      value: status.totalViews?.toLocaleString() || "0",
+      value:
+        status.totalViews?.toLocaleString() || "0",
       icon: HiOutlineEye,
       color: "#0d6e59",
     },
+
     {
       title: "Active Leads",
-      value: status.totalInquiries?.toLocaleString() || "0",
+      value:
+        status.totalInquiries?.toLocaleString() || "0",
       icon: HiOutlineUserGroup,
       color: "#0d6e59",
     },
+
     {
       title: "Live Listings",
-      value: status.activeListings?.toLocaleString() || "0",
+      value:
+        status.activeListings?.toLocaleString() || "0",
       icon: HiOutlineLibrary,
       color: "#0d6e59",
     },
+
     {
       title: "Properties Sold",
-      value: status.soldProperties?.toLocaleString() || "0",
+      value:
+        status.soldProperties?.toLocaleString() || "0",
       icon: HiOutlineCheckCircle,
       color: "#0d6e59",
     },
   ];
 
+  /*
+  |--------------------------------------------------------------------------
+  | FILTER PROPERTIES
+  |--------------------------------------------------------------------------
+  */
+
   const filteredProperties = Array.isArray(properties)
     ? properties
         .filter(
           (p) =>
-            p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            p.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            p.area.toLowerCase().includes(searchTerm.toLowerCase()),
+            p.title
+              ?.toLowerCase()
+              .includes(
+                searchTerm.toLowerCase(),
+              ) ||
+            p.city
+              ?.toLowerCase()
+              .includes(
+                searchTerm.toLowerCase(),
+              ) ||
+            p.area
+              ?.toLowerCase()
+              .includes(
+                searchTerm.toLowerCase(),
+              ),
         )
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt) -
+            new Date(a.createdAt),
+        )
     : [];
+
+  /*
+  |--------------------------------------------------------------------------
+  | DASHBOARD
+  |--------------------------------------------------------------------------
+  */
 
   return (
     <>
+      {/* ========================================================= */}
+      {/* HEADER */}
+      {/* ========================================================= */}
+
       <header className={s.header}>
         <div className={s.headerLeft}>
-          <h1 className={s.headerTitle}>Seller Dashboard</h1>
+          <h1 className={s.headerTitle}>
+            Seller Dashboard
+          </h1>
+
           <p className={s.headerSubtitle}>
-            Manage your property portfolio and track performance.
+            Manage your property portfolio and track
+            performance.
           </p>
         </div>
 
         <div className={s.headerActions}>
-          <button onClick={handleExport} className={s.exportButton}>
-            <HiOutlineDownload size={20} /> Export
+          <button
+            onClick={handleExport}
+            className={s.exportButton}
+          >
+            <HiOutlineDownload size={20} />
+            Export
           </button>
-          <Link to="/add-property" className={s.addButton}>
-            <HiPlus size={20} /> Add New
+
+          <Link
+            to="/add-property"
+            className={s.addButton}
+          >
+            <HiPlus size={20} />
+            Add New
           </Link>
         </div>
       </header>
 
+      {/* ========================================================= */}
+      {/* SUBSCRIPTION CARD */}
+      {/* ========================================================= */}
+
+      <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+
+        <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
+
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wider text-amber-600">
+              Seller Subscription
+            </p>
+
+            <h2 className="mt-1 text-2xl font-bold capitalize text-slate-900">
+              {currentPlan}
+            </h2>
+
+            <p className="mt-1 text-sm text-slate-500">
+              {subscriptionActive
+                ? "Your subscription is currently active."
+                : subscriptionExpired
+                  ? "Your subscription has expired."
+                  : "Your account is currently using the free plan."}
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-2 text-left md:text-right">
+
+            <p className="text-sm text-slate-500">
+              Properties
+            </p>
+
+            <p className="text-2xl font-bold text-slate-900">
+              {propertyCount}{" "}
+              <span className="text-base font-medium text-slate-400">
+                / {propertyLimit}
+              </span>
+            </p>
+
+            <p className="text-sm text-slate-500">
+              {remainingProperties > 0
+                ? `${remainingProperties} ${
+                    remainingProperties === 1
+                      ? "property"
+                      : "properties"
+                  } remaining`
+                : "Property limit reached"}
+            </p>
+
+          </div>
+
+          {!subscriptionActive && (
+            <Link
+              to="/subscription"
+              className="inline-flex items-center justify-center rounded-xl bg-amber-500 px-5 py-3 font-semibold text-white transition hover:bg-amber-600"
+            >
+              {subscriptionExpired
+                ? "Renew Subscription"
+                : "Upgrade Plan"}
+            </Link>
+          )}
+
+        </div>
+
+        {/* PROPERTY USAGE BAR */}
+
+        <div className="mt-6">
+
+          <div className="mb-2 flex justify-between text-xs font-medium text-slate-500">
+            <span>
+              Property Usage
+            </span>
+
+            <span>
+              {propertyCount} / {propertyLimit}
+            </span>
+          </div>
+
+          <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+
+            <div
+              className="h-full rounded-full bg-amber-500 transition-all duration-500"
+              style={{
+                width: `${Math.min(
+                  (propertyCount /
+                    Math.max(propertyLimit, 1)) *
+                    100,
+                  100,
+                )}%`,
+              }}
+            />
+
+          </div>
+
+        </div>
+
+        {/* LIMIT WARNING */}
+
+        {remainingProperties === 0 &&
+          subscriptionActive && (
+            <div className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4">
+
+              <p className="font-semibold text-red-700">
+                Property limit reached
+              </p>
+
+              <p className="mt-1 text-sm text-red-600">
+                You have reached the maximum number of
+                properties allowed on your current plan.
+              </p>
+
+              <Link
+                to="/subscription"
+                className="mt-3 inline-flex text-sm font-semibold text-red-700 underline"
+              >
+                Upgrade your subscription
+              </Link>
+
+            </div>
+          )}
+
+      </div>
+
+      {/* ========================================================= */}
+      {/* STATS */}
+      {/* ========================================================= */}
+
       <div className={s.statsGrid}>
         {statCards.map((card, i) => (
           <div
-            style={{ "--card-color": card.color }}
+            style={{
+              "--card-color": card.color,
+            }}
             key={i}
             className={s.statCard}
           >
             <div className={s.statIconWrapper}>
               <card.icon size={20} />
             </div>
-            <div className={s.statTitle}>{card.title}</div>
-            <div className={s.statValue}>{card.value}</div>
+
+            <div className={s.statTitle}>
+              {card.title}
+            </div>
+
+            <div className={s.statValue}>
+              {card.value}
+            </div>
           </div>
         ))}
       </div>
 
+      {/* ========================================================= */}
+      {/* PROPERTY LISTINGS */}
+      {/* ========================================================= */}
+
       <div className={s.listingsSection}>
+
         <div className={s.listingsHeader}>
-          <div className={s.listingsTitle}>Property Listings</div>
+
+          <div className={s.listingsTitle}>
+            Property Listings
+          </div>
+
           <div className={s.searchWrapper}>
-            <HiOutlineSearch className={s.searchIcon} />
+
+            <HiOutlineSearch
+              className={s.searchIcon}
+            />
+
             <input
               type="text"
               className={s.searchInput}
               value={searchTerm}
               placeholder="Search Listings..."
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) =>
+                setSearchTerm(e.target.value)
+              }
             />
+
           </div>
+
         </div>
 
         {filteredProperties.length === 0 ? (
           <div className={s.emptyListings}>
-            No properties found matching --{searchTerm}
+            {searchTerm
+              ? `No properties found matching --${searchTerm}`
+              : "No properties found."}
           </div>
         ) : (
           <>
-            <div className={s.propertiesGrid}>
-              {filteredProperties.slice(0, 3).map((p) => (
-                <PropertyCard
-                  key={p._id}
-                  property={p}
-                  renderActions={() => (
-                    <div className={s.propertyActions}>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleStastsUpd(p._id, p.status);
-                        }}
-                        className={s.statusButton(p.status)}
-                        title={
-                          p.status === "sold"
-                            ? "Mark as Available"
-                            : "Mark as Sold"
-                        }
-                      >
-                        <HiOutlineCheckCircle size={14} />{" "}
-                        {p.status === "sold" ? "Sold" : "Available"}
-                      </button>
-                      <Link
-                        to={`/edit-property/${p._id}`}
-                        className={s.editButton}
-                      >
-                        <HiOutlinePencilAlt size={14} /> Edit
-                      </Link>
 
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          hndleDel(p._id);
-                        }}
-                        className={s.deleteButton}
-                      >
-                        <HiOutlineTrash size={14} /> Delete
-                      </button>
-                    </div>
-                  )}
-                />
-              ))}
+            <div className={s.propertiesGrid}>
+
+              {filteredProperties
+                .slice(0, 3)
+                .map((p) => (
+                  <PropertyCard
+                    key={p._id}
+                    property={p}
+                    renderActions={() => (
+                      <div className={s.propertyActions}>
+
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+
+                            handleStastsUpd(
+                              p._id,
+                              p.status,
+                            );
+                          }}
+                          className={s.statusButton(
+                            p.status,
+                          )}
+                          title={
+                            p.status === "sold"
+                              ? "Mark as Available"
+                              : "Mark as Sold"
+                          }
+                        >
+                          <HiOutlineCheckCircle
+                            size={14}
+                          />
+
+                          {p.status === "sold"
+                            ? "Sold"
+                            : "Available"}
+                        </button>
+
+                        <Link
+                          to={`/edit-property/${p._id}`}
+                          className={s.editButton}
+                        >
+                          <HiOutlinePencilAlt
+                            size={14}
+                          />
+                          Edit
+                        </Link>
+
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+
+                            hndleDel(p._id);
+                          }}
+                          className={s.deleteButton}
+                        >
+                          <HiOutlineTrash
+                            size={14}
+                          />
+                          Delete
+                        </button>
+
+                      </div>
+                    )}
+                  />
+                ))}
+
             </div>
 
             {filteredProperties.length > 3 && (
               <div className={s.showMoreWrapper}>
-                <Link to="/my-properties" className={s.showMoreButton}>
-                  Show More Listings{" "}
+
+                <Link
+                  to="/my-properties"
+                  className={s.showMoreButton}
+                >
+                  Show More Listings
+
                   <HiOutlinePencilAlt
                     size={18}
                     style={{
-                      transform: "rotate(90deg)",
+                      transform:
+                        "rotate(90deg)",
                     }}
                   />
                 </Link>
+
               </div>
             )}
+
           </>
         )}
+
       </div>
 
+      {/* ========================================================= */}
+      {/* WIDGETS */}
+      {/* ========================================================= */}
+
       <div className={s.widgetsGrid}>
+
+        {/* INQUIRIES */}
+
         <div className={s.inquiriesWidget}>
-          <h2 className={s.widgetTitle}>Recent Lead Inquiries</h2>
+
+          <h2 className={s.widgetTitle}>
+            Recent Lead Inquiries
+          </h2>
+
           <p className={s.widgetSubtitle}>
             New messages from potential buyers.
           </p>
 
           <div className={s.inquiriesList}>
+
             {inquiries.map((inq, i) => (
-              <div key={i} className={s.inquiryItem}>
+              <div
+                key={i}
+                className={s.inquiryItem}
+              >
+
                 <div className={s.inquiryLeft}>
+
                   <div className={s.inquiryIcon}>
-                    <HiOutlineBell size={18} color="var(--primary)" />
+                    <HiOutlineBell
+                      size={18}
+                      color="var(--primary)"
+                    />
                   </div>
 
                   <div>
+
                     <div className={s.inquiryName}>
-                      {inq.buyer?.name || "Potential Buyer"}
+                      {inq.buyer?.name ||
+                        "Potential Buyer"}
                     </div>
+
                     <div className={s.inquiryProperty}>
-                      {inq.property?.title?.length > 30
-                        ? inq.property?.title?.slice(0, 30) + "..."
+                      {inq.property?.title?.length >
+                      30
+                        ? `${inq.property.title.slice(
+                            0,
+                            30,
+                          )}...`
                         : inq.property?.title}
                     </div>
+
                   </div>
+
                 </div>
 
                 <div className={s.inquiryRight}>
+
                   <div className={s.inquiryDate}>
-                    {new Date(inq.createdAt).toLocaleDateString()}
+                    {new Date(
+                      inq.createdAt,
+                    ).toLocaleDateString()}
                   </div>
-                  <span className={s.inquiryStatus(inq.status)}>
-                    {inq.status === "read" ? "Read" : "New"}
+
+                  <span
+                    className={s.inquiryStatus(
+                      inq.status,
+                    )}
+                  >
+                    {inq.status === "read"
+                      ? "Read"
+                      : "New"}
                   </span>
+
                 </div>
+
               </div>
             ))}
+
             {inquiries.length === 0 && (
-              <p className={s.noInquiries}>No recent inquiries</p>
+              <p className={s.noInquiries}>
+                No recent inquiries
+              </p>
             )}
+
           </div>
+
         </div>
 
+        {/* QUICK TIPS */}
+
         <div className={s.tipsWidget}>
-          <h2 className={s.widgetTitle}>Quick Tips</h2>
+
+          <h2 className={s.widgetTitle}>
+            Quick Tips
+          </h2>
 
           <div className={s.tipsList}>
+
             <div className={s.tipCardHighViews}>
+
               <h4 className={s.tipTitleHighViews}>
-                <HiOutlineEye size={16} /> High Views?
+                <HiOutlineEye size={16} />
+                High Views?
               </h4>
+
               <p className={s.tipTextHighViews}>
-                Your listings are trending. Try adding video tours increase
+                Your listings are trending. Try
+                adding video tours to increase
                 interest.
               </p>
+
             </div>
 
             <div className={s.tipCardMarket}>
-              <h4 className={s.tipTitleMarket}>Market Insight</h4>
+
+              <h4 className={s.tipTitleMarket}>
+                Market Insight
+              </h4>
+
               <p className={s.tipTextMarket}>
-                Properties in your area are selling fast. Your prices are
-                competitive.
+                Properties in your area are selling
+                fast. Your prices are competitive.
               </p>
+
             </div>
+
           </div>
+
         </div>
+
       </div>
     </>
   );
