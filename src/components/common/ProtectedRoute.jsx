@@ -1,8 +1,11 @@
 import React from "react";
-import { useAuth } from "../../context/AuthContext";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
-const ProtectedRoute = ({ allowedRoles, requireSubscription = false }) => {
+const ProtectedRoute = ({
+  allowedRoles,
+  requireSubscription = false,
+}) => {
   const { user, loading } = useAuth();
   const location = useLocation();
 
@@ -14,13 +17,15 @@ const ProtectedRoute = ({ allowedRoles, requireSubscription = false }) => {
     );
   }
 
-  const isGuestAllowed = allowedRoles?.includes(undefined);
-
-  if (!user && !isGuestAllowed) {
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  if (user && allowedRoles && !allowedRoles.includes(user.role)) {
+  // Role protection
+  if (
+    allowedRoles &&
+    !allowedRoles.includes(user.role)
+  ) {
     if (user.role === "admin") {
       return <Navigate to="/admin-dashboard" replace />;
     }
@@ -32,24 +37,11 @@ const ProtectedRoute = ({ allowedRoles, requireSubscription = false }) => {
     return <Navigate to="/" replace />;
   }
 
-  if (
-    user &&
-    requireSubscription &&
-    user.role === "seller" &&
-    (!user.subscription ||
-      user.subscription.status !== "active" ||
-      !user.subscription.expiresAt ||
-      new Date(user.subscription.expiresAt) <= new Date())
-  ) {
-    return <Navigate to="/subscription" replace />;
-  }
-
-  // 🔐 SELLER SUBSCRIPTION CHECK
-  if (requireSubscription) {
-    const subscription = user?.subscription;
+  // Paid subscription protection
+  if (requireSubscription && user.role === "seller") {
+    const subscription = user.subscription;
 
     const hasActiveSubscription =
-      user?.role === "seller" &&
       subscription?.status === "active" &&
       subscription?.expiresAt &&
       new Date(subscription.expiresAt) > new Date();
