@@ -21,7 +21,6 @@ import PropertyCard from "../../components/common/PropertyCard";
 const SellerDashboard = () => {
   const { logout, token, user, refreshUser } = useAuth();
 
-
   const [status, setStatus] = useState({
     totalProperties: 0,
     activeListings: 0,
@@ -47,13 +46,9 @@ const SellerDashboard = () => {
 
   const propertyLimit = subscription?.propertyLimit ?? 4;
 
-  const propertyCount =
-    status.totalProperties || properties.length || 0;
+  const propertyCount = status.totalProperties || properties.length || 0;
 
-  const remainingProperties = Math.max(
-    propertyLimit - propertyCount,
-    0,
-  );
+  const remainingProperties = Math.max(propertyLimit - propertyCount, 0);
 
   const subscriptionActive =
     subscription?.status === "active" &&
@@ -63,10 +58,7 @@ const SellerDashboard = () => {
   const subscriptionExpired =
     subscription?.status === "expired" ||
     subscription?.status === "cancelled" ||
-    (
-      subscription?.expiresAt &&
-      new Date(subscription.expiresAt) <= new Date()
-    );
+    (subscription?.expiresAt && new Date(subscription.expiresAt) <= new Date());
 
   /*
   |--------------------------------------------------------------------------
@@ -105,15 +97,7 @@ const SellerDashboard = () => {
         |--------------------------------------------------------------------------
         */
 
-        setStatus(
-          statusRes.data.status || statusRes.data,
-        );
-
-        /*
-        |--------------------------------------------------------------------------
-        | PROPERTIES
-        |--------------------------------------------------------------------------
-        */
+        const dashboardStatus = statusRes.data.status || statusRes.data;
 
         const props = Array.isArray(propsRes.data)
           ? propsRes.data
@@ -121,11 +105,13 @@ const SellerDashboard = () => {
 
         setProperties(props);
 
-        /*
-        |--------------------------------------------------------------------------
-        | INQUIRIES
-        |--------------------------------------------------------------------------
-        */
+        setStatus({
+          ...dashboardStatus,
+          totalProperties: props.length,
+          activeListings: props.filter((p) => p.status !== "sold").length,
+          soldProperties: props.filter((p) => p.status === "sold").length,
+          totalViews: props.reduce((total, p) => total + (p.views || 0), 0),
+        });
 
         setInquiries(
           Array.isArray(inqRes.data.inquiries)
@@ -137,10 +123,7 @@ const SellerDashboard = () => {
 
         setLoading(false);
       } catch (error) {
-        console.error(
-          "Failed to load dashboard data:",
-          error,
-        );
+        console.error("Failed to load dashboard data:", error);
 
         setLoading(false);
       }
@@ -170,40 +153,25 @@ const SellerDashboard = () => {
   */
 
   const hndleDel = async (id) => {
-    if (
-      !window.confirm(
-        "Are you sure you want to delete this listing?",
-      )
-    ) {
+    if (!window.confirm("Are you sure you want to delete this listing?")) {
       return;
     }
 
     try {
-      await axios.delete(
-        `${API_URL}/api/property/${id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      await axios.delete(`${API_URL}/api/property/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
 
-      setProperties(
-        properties.filter((p) => p._id !== id),
-      );
+      setProperties(properties.filter((p) => p._id !== id));
 
       setStatus((prev) => ({
         ...prev,
-        totalProperties: Math.max(
-          (prev.totalProperties || 0) - 1,
-          0,
-        ),
+        totalProperties: Math.max((prev.totalProperties || 0) - 1, 0),
       }));
     } catch (error) {
-      console.error(
-        "Failed to delete property:",
-        error,
-      );
+      console.error("Failed to delete property:", error);
 
       if (
         error.response?.status === 403 &&
@@ -213,10 +181,7 @@ const SellerDashboard = () => {
         return;
       }
 
-      alert(
-        error.response?.data?.message ||
-          "Failed to delete property.",
-      );
+      alert(error.response?.data?.message || "Failed to delete property.");
     }
   };
 
@@ -227,8 +192,7 @@ const SellerDashboard = () => {
   */
 
   const handleStastsUpd = async (id, curStatus) => {
-    const newStatus =
-      curStatus === "sold" ? "sale" : "sold";
+    const newStatus = curStatus === "sold" ? "sale" : "sold";
 
     try {
       await axios.patch(
@@ -254,10 +218,7 @@ const SellerDashboard = () => {
         ),
       );
     } catch (error) {
-      console.error(
-        "Failed to update status:",
-        error,
-      );
+      console.error("Failed to update status:", error);
 
       if (
         error.response?.status === 403 &&
@@ -267,10 +228,7 @@ const SellerDashboard = () => {
         return;
       }
 
-      alert(
-        error.response?.data?.message ||
-          "Failed to update status.",
-      );
+      alert(error.response?.data?.message || "Failed to update status.");
     }
   };
 
@@ -281,14 +239,7 @@ const SellerDashboard = () => {
   */
 
   const handleExport = () => {
-    const headers = [
-      "Title",
-      "Location",
-      "Type",
-      "Price",
-      "Status",
-      "Views",
-    ];
+    const headers = ["Title", "Location", "Type", "Price", "Status", "Views"];
 
     const csvRows = properties.map((p) => [
       p.title,
@@ -299,26 +250,18 @@ const SellerDashboard = () => {
       p.views || 0,
     ]);
 
-    const csvContent = [headers, ...csvRows]
-      .map((e) => e.join(","))
-      .join("\n");
+    const csvContent = [headers, ...csvRows].map((e) => e.join(",")).join("\n");
 
-    const blob = new Blob(
-      [csvContent],
-      {
-        type: "text/csv;charset=utf-8;",
-      },
-    );
+    const blob = new Blob([csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
 
     const link = document.createElement("a");
 
     const url = URL.createObjectURL(blob);
 
     link.setAttribute("href", url);
-    link.setAttribute(
-      "download",
-      "property_listings.csv",
-    );
+    link.setAttribute("download", "property_listings.csv");
 
     link.style.visibility = "hidden";
 
@@ -344,36 +287,32 @@ const SellerDashboard = () => {
       </div>
     );
   }
-  
+
   const statCards = [
     {
       title: "Total Views",
-      value:
-        status.totalViews?.toLocaleString() || "0",
+      value: status.totalViews?.toLocaleString() || "0",
       icon: HiOutlineEye,
       color: "#0d6e59",
     },
 
     {
       title: "Active Leads",
-      value:
-        status.totalInquiries?.toLocaleString() || "0",
+      value: status.totalInquiries?.toLocaleString() || "0",
       icon: HiOutlineUserGroup,
       color: "#0d6e59",
     },
 
     {
       title: "Live Listings",
-      value:
-        status.activeListings?.toLocaleString() || "0",
+      value: status.activeListings?.toLocaleString() || "0",
       icon: HiOutlineLibrary,
       color: "#0d6e59",
     },
 
     {
       title: "Properties Sold",
-      value:
-        status.soldProperties?.toLocaleString() || "0",
+      value: status.soldProperties?.toLocaleString() || "0",
       icon: HiOutlineCheckCircle,
       color: "#0d6e59",
     },
@@ -389,27 +328,11 @@ const SellerDashboard = () => {
     ? properties
         .filter(
           (p) =>
-            p.title
-              ?.toLowerCase()
-              .includes(
-                searchTerm.toLowerCase(),
-              ) ||
-            p.city
-              ?.toLowerCase()
-              .includes(
-                searchTerm.toLowerCase(),
-              ) ||
-            p.area
-              ?.toLowerCase()
-              .includes(
-                searchTerm.toLowerCase(),
-              ),
+            p.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            p.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            p.area?.toLowerCase().includes(searchTerm.toLowerCase()),
         )
-        .sort(
-          (a, b) =>
-            new Date(b.createdAt) -
-            new Date(a.createdAt),
-        )
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
     : [];
 
   /*
@@ -426,29 +349,20 @@ const SellerDashboard = () => {
 
       <header className={s.header}>
         <div className={s.headerLeft}>
-          <h1 className={s.headerTitle}>
-            Seller Dashboard
-          </h1>
+          <h1 className={s.headerTitle}>Seller Dashboard</h1>
 
           <p className={s.headerSubtitle}>
-            Manage your property portfolio and track
-            performance.
+            Manage your property portfolio and track performance.
           </p>
         </div>
 
         <div className={s.headerActions}>
-          <button
-            onClick={handleExport}
-            className={s.exportButton}
-          >
+          <button onClick={handleExport} className={s.exportButton}>
             <HiOutlineDownload size={20} />
             Export
           </button>
 
-          <Link
-            to="/add-property"
-            className={s.addButton}
-          >
+          <Link to="/add-property" className={s.addButton}>
             <HiPlus size={20} />
             Add New
           </Link>
@@ -460,9 +374,7 @@ const SellerDashboard = () => {
       {/* ========================================================= */}
 
       <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-
         <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
-
           <div>
             <p className="text-sm font-semibold uppercase tracking-wider text-amber-600">
               Seller Subscription
@@ -482,10 +394,7 @@ const SellerDashboard = () => {
           </div>
 
           <div className="flex flex-col gap-2 text-left md:text-right">
-
-            <p className="text-sm text-slate-500">
-              Properties
-            </p>
+            <p className="text-sm text-slate-500">Properties</p>
 
             <p className="text-2xl font-bold text-slate-900">
               {propertyCount}{" "}
@@ -497,13 +406,10 @@ const SellerDashboard = () => {
             <p className="text-sm text-slate-500">
               {remainingProperties > 0
                 ? `${remainingProperties} ${
-                    remainingProperties === 1
-                      ? "property"
-                      : "properties"
+                    remainingProperties === 1 ? "property" : "properties"
                   } remaining`
                 : "Property limit reached"}
             </p>
-
           </div>
 
           {!subscriptionActive && (
@@ -511,22 +417,16 @@ const SellerDashboard = () => {
               to="/subscription"
               className="inline-flex items-center justify-center rounded-xl bg-amber-500 px-5 py-3 font-semibold text-white transition hover:bg-amber-600"
             >
-              {subscriptionExpired
-                ? "Renew Subscription"
-                : "Upgrade Plan"}
+              {subscriptionExpired ? "Renew Subscription" : "Upgrade Plan"}
             </Link>
           )}
-
         </div>
 
         {/* PROPERTY USAGE BAR */}
 
         <div className="mt-6">
-
           <div className="mb-2 flex justify-between text-xs font-medium text-slate-500">
-            <span>
-              Property Usage
-            </span>
+            <span>Property Usage</span>
 
             <span>
               {propertyCount} / {propertyLimit}
@@ -534,48 +434,37 @@ const SellerDashboard = () => {
           </div>
 
           <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
-
             <div
               className="h-full rounded-full bg-amber-500 transition-all duration-500"
               style={{
                 width: `${Math.min(
-                  (propertyCount /
-                    Math.max(propertyLimit, 1)) *
-                    100,
+                  (propertyCount / Math.max(propertyLimit, 1)) * 100,
                   100,
                 )}%`,
               }}
             />
-
           </div>
-
         </div>
 
         {/* LIMIT WARNING */}
 
-        {remainingProperties === 0 &&
-          subscriptionActive && (
-            <div className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4">
+        {remainingProperties === 0 && subscriptionActive && (
+          <div className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4">
+            <p className="font-semibold text-red-700">Property limit reached</p>
 
-              <p className="font-semibold text-red-700">
-                Property limit reached
-              </p>
+            <p className="mt-1 text-sm text-red-600">
+              You have reached the maximum number of properties allowed on your
+              current plan.
+            </p>
 
-              <p className="mt-1 text-sm text-red-600">
-                You have reached the maximum number of
-                properties allowed on your current plan.
-              </p>
-
-              <Link
-                to="/subscription"
-                className="mt-3 inline-flex text-sm font-semibold text-red-700 underline"
-              >
-                Upgrade your subscription
-              </Link>
-
-            </div>
-          )}
-
+            <Link
+              to="/subscription"
+              className="mt-3 inline-flex text-sm font-semibold text-red-700 underline"
+            >
+              Upgrade your subscription
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* ========================================================= */}
@@ -595,13 +484,9 @@ const SellerDashboard = () => {
               <card.icon size={20} />
             </div>
 
-            <div className={s.statTitle}>
-              {card.title}
-            </div>
+            <div className={s.statTitle}>{card.title}</div>
 
-            <div className={s.statValue}>
-              {card.value}
-            </div>
+            <div className={s.statValue}>{card.value}</div>
           </div>
         ))}
       </div>
@@ -611,31 +496,20 @@ const SellerDashboard = () => {
       {/* ========================================================= */}
 
       <div className={s.listingsSection}>
-
         <div className={s.listingsHeader}>
-
-          <div className={s.listingsTitle}>
-            Property Listings
-          </div>
+          <div className={s.listingsTitle}>Property Listings</div>
 
           <div className={s.searchWrapper}>
-
-            <HiOutlineSearch
-              className={s.searchIcon}
-            />
+            <HiOutlineSearch className={s.searchIcon} />
 
             <input
               type="text"
               className={s.searchInput}
               value={searchTerm}
               placeholder="Search Listings..."
-              onChange={(e) =>
-                setSearchTerm(e.target.value)
-              }
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
-
           </div>
-
         </div>
 
         {filteredProperties.length === 0 ? (
@@ -646,100 +520,71 @@ const SellerDashboard = () => {
           </div>
         ) : (
           <>
-
             <div className={s.propertiesGrid}>
+              {filteredProperties.slice(0, 3).map((p) => (
+                <PropertyCard
+                  key={p._id}
+                  property={p}
+                  renderActions={() => (
+                    <div className={s.propertyActions}>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
 
-              {filteredProperties
-                .slice(0, 3)
-                .map((p) => (
-                  <PropertyCard
-                    key={p._id}
-                    property={p}
-                    renderActions={() => (
-                      <div className={s.propertyActions}>
+                          handleStastsUpd(p._id, p.status);
+                        }}
+                        className={s.statusButton(p.status)}
+                        title={
+                          p.status === "sold"
+                            ? "Mark as Available"
+                            : "Mark as Sold"
+                        }
+                      >
+                        <HiOutlineCheckCircle size={14} />
 
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
+                        {p.status === "sold" ? "Sold" : "Available"}
+                      </button>
 
-                            handleStastsUpd(
-                              p._id,
-                              p.status,
-                            );
-                          }}
-                          className={s.statusButton(
-                            p.status,
-                          )}
-                          title={
-                            p.status === "sold"
-                              ? "Mark as Available"
-                              : "Mark as Sold"
-                          }
-                        >
-                          <HiOutlineCheckCircle
-                            size={14}
-                          />
+                      <Link
+                        to={`/edit-property/${p._id}`}
+                        className={s.editButton}
+                      >
+                        <HiOutlinePencilAlt size={14} />
+                        Edit
+                      </Link>
 
-                          {p.status === "sold"
-                            ? "Sold"
-                            : "Available"}
-                        </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
 
-                        <Link
-                          to={`/edit-property/${p._id}`}
-                          className={s.editButton}
-                        >
-                          <HiOutlinePencilAlt
-                            size={14}
-                          />
-                          Edit
-                        </Link>
-
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-
-                            hndleDel(p._id);
-                          }}
-                          className={s.deleteButton}
-                        >
-                          <HiOutlineTrash
-                            size={14}
-                          />
-                          Delete
-                        </button>
-
-                      </div>
-                    )}
-                  />
-                ))}
-
+                          hndleDel(p._id);
+                        }}
+                        className={s.deleteButton}
+                      >
+                        <HiOutlineTrash size={14} />
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                />
+              ))}
             </div>
 
             {filteredProperties.length > 3 && (
               <div className={s.showMoreWrapper}>
-
-                <Link
-                  to="/my-properties"
-                  className={s.showMoreButton}
-                >
+                <Link to="/my-properties" className={s.showMoreButton}>
                   Show More Listings
-
                   <HiOutlinePencilAlt
                     size={18}
                     style={{
-                      transform:
-                        "rotate(90deg)",
+                      transform: "rotate(90deg)",
                     }}
                   />
                 </Link>
-
               </div>
             )}
-
           </>
         )}
-
       </div>
 
       {/* ========================================================= */}
@@ -747,132 +592,82 @@ const SellerDashboard = () => {
       {/* ========================================================= */}
 
       <div className={s.widgetsGrid}>
-
         {/* INQUIRIES */}
 
         <div className={s.inquiriesWidget}>
-
-          <h2 className={s.widgetTitle}>
-            Recent Lead Inquiries
-          </h2>
+          <h2 className={s.widgetTitle}>Recent Lead Inquiries</h2>
 
           <p className={s.widgetSubtitle}>
             New messages from potential buyers.
           </p>
 
           <div className={s.inquiriesList}>
-
             {inquiries.map((inq, i) => (
-              <div
-                key={i}
-                className={s.inquiryItem}
-              >
-
+              <div key={i} className={s.inquiryItem}>
                 <div className={s.inquiryLeft}>
-
                   <div className={s.inquiryIcon}>
-                    <HiOutlineBell
-                      size={18}
-                      color="var(--primary)"
-                    />
+                    <HiOutlineBell size={18} color="var(--primary)" />
                   </div>
 
                   <div>
-
                     <div className={s.inquiryName}>
-                      {inq.buyer?.name ||
-                        "Potential Buyer"}
+                      {inq.buyer?.name || "Potential Buyer"}
                     </div>
 
                     <div className={s.inquiryProperty}>
-                      {inq.property?.title?.length >
-                      30
-                        ? `${inq.property.title.slice(
-                            0,
-                            30,
-                          )}...`
+                      {inq.property?.title?.length > 30
+                        ? `${inq.property.title.slice(0, 30)}...`
                         : inq.property?.title}
                     </div>
-
                   </div>
-
                 </div>
 
                 <div className={s.inquiryRight}>
-
                   <div className={s.inquiryDate}>
-                    {new Date(
-                      inq.createdAt,
-                    ).toLocaleDateString()}
+                    {new Date(inq.createdAt).toLocaleDateString()}
                   </div>
 
-                  <span
-                    className={s.inquiryStatus(
-                      inq.status,
-                    )}
-                  >
-                    {inq.status === "read"
-                      ? "Read"
-                      : "New"}
+                  <span className={s.inquiryStatus(inq.status)}>
+                    {inq.status === "read" ? "Read" : "New"}
                   </span>
-
                 </div>
-
               </div>
             ))}
 
             {inquiries.length === 0 && (
-              <p className={s.noInquiries}>
-                No recent inquiries
-              </p>
+              <p className={s.noInquiries}>No recent inquiries</p>
             )}
-
           </div>
-
         </div>
 
         {/* QUICK TIPS */}
 
         <div className={s.tipsWidget}>
-
-          <h2 className={s.widgetTitle}>
-            Quick Tips
-          </h2>
+          <h2 className={s.widgetTitle}>Quick Tips</h2>
 
           <div className={s.tipsList}>
-
             <div className={s.tipCardHighViews}>
-
               <h4 className={s.tipTitleHighViews}>
                 <HiOutlineEye size={16} />
                 High Views?
               </h4>
 
               <p className={s.tipTextHighViews}>
-                Your listings are trending. Try
-                adding video tours to increase
+                Your listings are trending. Try adding video tours to increase
                 interest.
               </p>
-
             </div>
 
             <div className={s.tipCardMarket}>
-
-              <h4 className={s.tipTitleMarket}>
-                Market Insight
-              </h4>
+              <h4 className={s.tipTitleMarket}>Market Insight</h4>
 
               <p className={s.tipTextMarket}>
-                Properties in your area are selling
-                fast. Your prices are competitive.
+                Properties in your area are selling fast. Your prices are
+                competitive.
               </p>
-
             </div>
-
           </div>
-
         </div>
-
       </div>
     </>
   );
