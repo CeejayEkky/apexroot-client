@@ -32,6 +32,7 @@ import ChatMessages from "./pages/shared/ChatMessages";
 import Contact from "./pages/shared/Contact";
 import Wishlist from "./pages/buyer/Wishlist";
 import Subscription from "./pages/seller/Subscription";
+import SubscriptionVerify from "./pages/seller/SubscriptionVerify";
 
 const ScrollToTopOnRouteChange = () => {
   const { pathname } = useLocation();
@@ -118,6 +119,10 @@ const App = () => {
           </Route>
 
           <Route element={<ProtectedRoute allowedRoles={["seller"]} />}>
+            <Route
+              path="/subscription/verify"
+              element={<SubscriptionVerify />}
+            />
             <Route element={<SellerLayout />}>
               <Route path="/dashboard" element={<SellerDashboard />} />
               <Route path="/seller-dashboard" element={<SellerDashboard />} />
