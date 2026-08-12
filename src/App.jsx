@@ -33,6 +33,7 @@ import Contact from "./pages/shared/Contact";
 import Wishlist from "./pages/buyer/Wishlist";
 import Subscription from "./pages/seller/Subscription";
 import SubscriptionVerify from "./pages/seller/SubscriptionVerify";
+import SubscriptionDashboard from "./pages/seller/SubscriptionDashboard";
 
 const ScrollToTopOnRouteChange = () => {
   const { pathname } = useLocation();
@@ -119,6 +120,10 @@ const App = () => {
           </Route>
 
           <Route element={<ProtectedRoute allowedRoles={["seller"]} />}>
+            <Route
+              path="/subscription-dashboard"
+              element={<SubscriptionDashboard />}
+            />
             <Route
               path="/subscription/verify"
               element={<SubscriptionVerify />}

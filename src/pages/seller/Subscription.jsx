@@ -104,7 +104,7 @@ const Subscription = () => {
 
             <div className="mb-8 space-y-4">
 
-              <Feature text="Create property listings" />
+              <Feature text="Create property listings (<=12)" />
               <Feature text="Manage your properties" />
               <Feature text="Access seller dashboard" />
               <Feature text="Manage inquiries" />
@@ -154,7 +154,7 @@ const Subscription = () => {
 
             <div className="mb-8 space-y-4">
 
-              <Feature text="Create property listings" />
+              <Feature text="Create property listings (=30)" />
               <Feature text="Manage your properties" />
               <Feature text="Access seller dashboard" />
               <Feature text="Manage inquiries" />

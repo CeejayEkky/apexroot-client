@@ -20,6 +20,7 @@ import PropertyCard from "../../components/common/PropertyCard";
 
 const SellerDashboard = () => {
   const { logout, token } = useAuth();
+  const [subscriptionError, setSubscriptionError] = useState(false);
   const [status, setStatus] = useState({
     totalProperties: 0,
     activeListings: 0,
@@ -36,7 +37,7 @@ const SellerDashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [ statusRes, propsRes, inqRes ] = await Promise.all([
+        const [statusRes, propsRes, inqRes] = await Promise.all([
           axios.get(`${API_URL}/api/property/seller/dashboard`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
@@ -62,6 +63,13 @@ const SellerDashboard = () => {
         setLoading(false);
       } catch (error) {
         console.error("Failed to load dashboard data:", error);
+        if (
+          error.response?.status === 403 &&
+          error.response?.data?.subscriptionRequired
+        ) {
+          setSubscriptionError(true);
+        }
+
         setLoading(false);
       }
     };
@@ -132,6 +140,35 @@ const SellerDashboard = () => {
         <div className="loader"></div>
       </div>
     );
+
+  if (subscriptionError) {
+    return (
+      <div className="flex min-h-[70vh] items-center justify-center px-4">
+        <div className="w-full max-w-lg rounded-2xl bg-white p-8 text-center shadow-lg">
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-amber-100">
+            <HiOutlineLibrary size={30} className="text-amber-600" />
+          </div>
+
+          <h1 className="text-2xl font-bold text-slate-900">
+            Subscription Required
+          </h1>
+
+          <p className="mt-3 text-slate-600">
+            Your seller subscription is inactive or has expired. Renew your
+            subscription to access your seller dashboard and manage your
+            properties.
+          </p>
+
+          <Link
+            to="/subscription"
+            className="mt-6 inline-flex rounded-xl bg-amber-500 px-6 py-3 font-semibold text-white transition hover:bg-amber-600"
+          >
+            View Subscription Plans
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const statCards = [
     {
@@ -259,8 +296,8 @@ const SellerDashboard = () => {
 
                       <button
                         onClick={(e) => {
-                          e.stopPropagation()
-                          hndleDel(p._id)
+                          e.stopPropagation();
+                          hndleDel(p._id);
                         }}
                         className={s.deleteButton}
                       >
@@ -349,8 +386,8 @@ const SellerDashboard = () => {
             <div className={s.tipCardMarket}>
               <h4 className={s.tipTitleMarket}>Market Insight</h4>
               <p className={s.tipTextMarket}>
-                Properties in your area are selling fast. Your prices
-                are competitive.
+                Properties in your area are selling fast. Your prices are
+                competitive.
               </p>
             </div>
           </div>
