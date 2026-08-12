@@ -70,6 +70,7 @@ const SellerDashboard = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
+        setSubscriptionError(false);
 
         const [statusRes, propsRes, inqRes] = await Promise.all([
           axios.get(`${API_URL}/api/property/seller/dashboard`, {
@@ -91,28 +92,22 @@ const SellerDashboard = () => {
           }),
         ]);
 
-        /*
-        |--------------------------------------------------------------------------
-        | DASHBOARD STATS
-        |--------------------------------------------------------------------------
-        */
+        console.log("DASHBOARD RESPONSE:", statusRes.data);
+        console.log("MY PROPERTIES RESPONSE:", propsRes.data);
 
+        // Dashboard stats from backend
         const dashboardStatus = statusRes.data.status || statusRes.data;
 
+        setStatus(dashboardStatus);
+
+        // Properties
         const props = Array.isArray(propsRes.data)
           ? propsRes.data
           : propsRes.data.properties || [];
 
         setProperties(props);
 
-        setStatus({
-          ...dashboardStatus,
-          totalProperties: props.length,
-          activeListings: props.filter((p) => p.status !== "sold").length,
-          soldProperties: props.filter((p) => p.status === "sold").length,
-          totalViews: props.reduce((total, p) => total + (p.views || 0), 0),
-        });
-
+        // Inquiries
         setInquiries(
           Array.isArray(inqRes.data.inquiries)
             ? inqRes.data.inquiries.slice(0, 3)
@@ -124,6 +119,13 @@ const SellerDashboard = () => {
         setLoading(false);
       } catch (error) {
         console.error("Failed to load dashboard data:", error);
+
+        if (
+          error.response?.status === 403 &&
+          error.response?.data?.subscriptionRequired
+        ) {
+          setSubscriptionError(true);
+        }
 
         setLoading(false);
       }
