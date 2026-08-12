@@ -31,6 +31,7 @@ import MyInquiries from "./pages/buyer/MyInquiries";
 import ChatMessages from "./pages/shared/ChatMessages";
 import Contact from "./pages/shared/Contact";
 import Wishlist from "./pages/buyer/Wishlist";
+import Subscription from "./pages/seller/Subscription";
 
 const ScrollToTopOnRouteChange = () => {
   const { pathname } = useLocation();
@@ -123,6 +124,7 @@ const App = () => {
               <Route path="/add-property" element={<AddProperty />} />
               <Route path="/my-properties" element={<MyProperties />} />
               <Route path="/edit-property/:id" element={<EditProperty />} />
+              <Route path="/subscription" element={<Subscription />} />
             </Route>
           </Route>
         </Route>
@@ -138,7 +140,7 @@ const App = () => {
           </Route>
         </Route>
 
-        <Route path="*" element={<Navigate to={'/'} replace />} />
+        <Route path="*" element={<Navigate to={"/"} replace />} />
       </Routes>
     </div>
   );
