@@ -134,7 +134,6 @@ const App = () => {
               element={
                 <ProtectedRoute
                   allowedRoles={["seller"]}
-                  requireSubscription={true}
                 />
               }
             >
