@@ -8,7 +8,7 @@ import API_URL from "../../config";
 const SubscriptionVerify = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { token } = useAuth();
+  const { token, refreshUser } = useAuth();
 
   const [status, setStatus] = useState("verifying");
   const [message, setMessage] = useState(
@@ -45,6 +45,8 @@ const SubscriptionVerify = () => {
         );
 
         if (response.data.success) {
+          await refreshUser();
+          
           setStatus("success");
           setMessage(
             response.data.message ||

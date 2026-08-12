@@ -123,13 +123,23 @@ const App = () => {
               path="/subscription/verify"
               element={<SubscriptionVerify />}
             />
-            <Route element={<SellerLayout />}>
-              <Route path="/dashboard" element={<SellerDashboard />} />
-              <Route path="/seller-dashboard" element={<SellerDashboard />} />
-              <Route path="/add-property" element={<AddProperty />} />
-              <Route path="/my-properties" element={<MyProperties />} />
-              <Route path="/edit-property/:id" element={<EditProperty />} />
-              <Route path="/subscription" element={<Subscription />} />
+            <Route path="/subscription" element={<Subscription />} />
+
+            <Route
+              element={
+                <ProtectedRoute
+                  allowedRoles={["seller"]}
+                  requireSubscription={true}
+                />
+              }
+            >
+              <Route element={<SellerLayout />}>
+                <Route path="/dashboard" element={<SellerDashboard />} />
+                <Route path="/seller-dashboard" element={<SellerDashboard />} />
+                <Route path="/add-property" element={<AddProperty />} />
+                <Route path="/my-properties" element={<MyProperties />} />
+                <Route path="/edit-property/:id" element={<EditProperty />} />
+              </Route>
             </Route>
           </Route>
         </Route>
