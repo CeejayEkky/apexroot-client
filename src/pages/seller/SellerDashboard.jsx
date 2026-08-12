@@ -68,11 +68,12 @@ const SellerDashboard = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!token) return;
+
       try {
         setLoading(true);
-        setSubscriptionError(false);
 
-        const [statusRes, propsRes, inqRes] = await Promise.all([
+        const results = await Promise.allSettled([
           axios.get(`${API_URL}/api/property/seller/dashboard`, {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -92,48 +93,67 @@ const SellerDashboard = () => {
           }),
         ]);
 
-        console.log("DASHBOARD RESPONSE:", statusRes.data);
-        console.log("MY PROPERTIES RESPONSE:", propsRes.data);
+        const [statusResult, propertiesResult, inquiriesResult] = results;
 
-        // Dashboard stats from backend
-        const dashboardStatus = statusRes.data.status || statusRes.data;
+        // ==========================================
+        // DASHBOARD STATS
+        // ==========================================
 
-        setStatus(dashboardStatus);
+        if (statusResult.status === "fulfilled") {
+          console.log("DASHBOARD RESPONSE:", statusResult.value.data);
 
-        // Properties
-        const props = Array.isArray(propsRes.data)
-          ? propsRes.data
-          : propsRes.data.properties || [];
+          const dashboardStatus =
+            statusResult.value.data.status || statusResult.value.data;
 
-        setProperties(props);
-
-        // Inquiries
-        setInquiries(
-          Array.isArray(inqRes.data.inquiries)
-            ? inqRes.data.inquiries.slice(0, 3)
-            : Array.isArray(inqRes.data)
-              ? inqRes.data.slice(0, 3)
-              : [],
-        );
-
-        setLoading(false);
-      } catch (error) {
-        console.error("Failed to load dashboard data:", error);
-
-        if (
-          error.response?.status === 403 &&
-          error.response?.data?.subscriptionRequired
-        ) {
-          setSubscriptionError(true);
+          setStatus(dashboardStatus);
+        } else {
+          console.error("Dashboard stats failed:", statusResult.reason);
         }
 
+        // ==========================================
+        // PROPERTIES
+        // ==========================================
+
+        if (propertiesResult.status === "fulfilled") {
+          console.log("MY PROPERTIES RESPONSE:", propertiesResult.value.data);
+
+          const data = propertiesResult.value.data;
+
+          const props = Array.isArray(data) ? data : data.properties || [];
+
+          setProperties(props);
+        } else {
+          console.error("Properties failed:", propertiesResult.reason);
+        }
+
+        // ==========================================
+        // INQUIRIES
+        // ==========================================
+
+        if (inquiriesResult.status === "fulfilled") {
+          const data = inquiriesResult.value.data;
+
+          setInquiries(
+            Array.isArray(data.inquiries)
+              ? data.inquiries.slice(0, 3)
+              : Array.isArray(data)
+                ? data.slice(0, 3)
+                : [],
+          );
+        } else {
+          console.warn("Inquiry request failed:", inquiriesResult.reason);
+
+          // Don't break the dashboard because inquiries failed
+          setInquiries([]);
+        }
+      } catch (error) {
+        console.error("Unexpected dashboard error:", error);
+      } finally {
         setLoading(false);
       }
     };
 
-    if (token) {
-      fetchData();
-    }
+    fetchData();
   }, [token]);
 
   /*
@@ -179,7 +199,6 @@ const SellerDashboard = () => {
         error.response?.status === 403 &&
         error.response?.data?.subscriptionRequired
       ) {
-        setSubscriptionError(true);
         return;
       }
 
@@ -226,7 +245,6 @@ const SellerDashboard = () => {
         error.response?.status === 403 &&
         error.response?.data?.subscriptionRequired
       ) {
-        setSubscriptionError(true);
         return;
       }
 
