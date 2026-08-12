@@ -21,7 +21,6 @@ import PropertyCard from "../../components/common/PropertyCard";
 const SellerDashboard = () => {
   const { logout, token, user, refreshUser } = useAuth();
 
-  const [subscriptionError, setSubscriptionError] = useState(false);
 
   const [status, setStatus] = useState({
     totalProperties: 0,
@@ -79,7 +78,6 @@ const SellerDashboard = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        setSubscriptionError(false);
 
         const [statusRes, propsRes, inqRes] = await Promise.all([
           axios.get(`${API_URL}/api/property/seller/dashboard`, {
@@ -143,19 +141,6 @@ const SellerDashboard = () => {
           "Failed to load dashboard data:",
           error,
         );
-
-        /*
-        |--------------------------------------------------------------------------
-        | SUBSCRIPTION REQUIRED
-        |--------------------------------------------------------------------------
-        */
-
-        if (
-          error.response?.status === 403 &&
-          error.response?.data?.subscriptionRequired
-        ) {
-          setSubscriptionError(true);
-        }
 
         setLoading(false);
       }
@@ -359,53 +344,7 @@ const SellerDashboard = () => {
       </div>
     );
   }
-
-  /*
-  |--------------------------------------------------------------------------
-  | SUBSCRIPTION ERROR SCREEN
-  |--------------------------------------------------------------------------
-  */
-
-  if (subscriptionError) {
-    return (
-      <div className="flex min-h-[70vh] items-center justify-center px-4">
-        <div className="w-full max-w-lg rounded-2xl bg-white p-8 text-center shadow-lg">
-
-          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-amber-100">
-            <HiOutlineLibrary
-              size={30}
-              className="text-amber-600"
-            />
-          </div>
-
-          <h1 className="text-2xl font-bold text-slate-900">
-            Subscription Required
-          </h1>
-
-          <p className="mt-3 text-slate-600">
-            Your seller subscription is inactive or has
-            expired. Renew your subscription to access
-            your seller dashboard and manage your
-            properties.
-          </p>
-
-          <Link
-            to="/subscription"
-            className="mt-6 inline-flex rounded-xl bg-amber-500 px-6 py-3 font-semibold text-white transition hover:bg-amber-600"
-          >
-            View Subscription Plans
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  /*
-  |--------------------------------------------------------------------------
-  | STAT CARDS
-  |--------------------------------------------------------------------------
-  */
-
+  
   const statCards = [
     {
       title: "Total Views",
