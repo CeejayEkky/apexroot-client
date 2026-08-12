@@ -1,13 +1,9 @@
 import React from "react";
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
-const ProtectedRoute = ({
-  allowedRoles,
-  requireSubscription = false,
-}) => {
+const ProtectedRoute = ({ allowedRoles }) => {
   const { user, loading } = useAuth();
-  const location = useLocation();
 
   if (loading) {
     return (
@@ -21,11 +17,7 @@ const ProtectedRoute = ({
     return <Navigate to="/login" replace />;
   }
 
-  // Role protection
-  if (
-    allowedRoles &&
-    !allowedRoles.includes(user.role)
-  ) {
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
     if (user.role === "admin") {
       return <Navigate to="/admin-dashboard" replace />;
     }
@@ -35,26 +27,6 @@ const ProtectedRoute = ({
     }
 
     return <Navigate to="/" replace />;
-  }
-
-  // Paid subscription protection
-  if (requireSubscription && user.role === "seller") {
-    const subscription = user.subscription;
-
-    const hasActiveSubscription =
-      subscription?.status === "active" &&
-      subscription?.expiresAt &&
-      new Date(subscription.expiresAt) > new Date();
-
-    if (!hasActiveSubscription) {
-      return (
-        <Navigate
-          to="/subscription"
-          replace
-          state={{ from: location.pathname }}
-        />
-      );
-    }
   }
 
   return <Outlet />;
