@@ -187,7 +187,7 @@ const Subscription = () => {
 
             <div className="mb-8">
               <span className="text-4xl font-bold text-slate-900">
-                ₦8,000
+                ₦5,250
               </span>
 
               <span className="ml-2 text-slate-500">
@@ -245,7 +245,7 @@ const Subscription = () => {
 
             <div className="mb-8">
               <span className="text-4xl font-bold text-slate-900">
-                ₦15,000
+                ₦10,250
               </span>
 
               <span className="ml-2 text-slate-500">
