@@ -34,6 +34,9 @@ import Wishlist from "./pages/buyer/Wishlist";
 import Subscription from "./pages/seller/Subscription";
 import SubscriptionVerify from "./pages/seller/SubscriptionVerify";
 import SubscriptionDashboard from "./pages/seller/SubscriptionDashboard";
+import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
+import TermsOfService from "./pages/legal/TermsOfService";
+import CookieSettings from "./pages/legal/CookieSettings";
 
 const ScrollToTopOnRouteChange = () => {
   const { pathname } = useLocation();
@@ -105,6 +108,9 @@ const App = () => {
         <Route path="/" element={<Landing />} />
         <Route path="/properties" element={<Properties />} />
         <Route path="/property/:id" element={<PropertyDetails />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-of-service" element={<TermsOfService />} />
+        <Route path="/cookie-settings" element={<CookieSettings />} />
 
         <Route
           element={
@@ -130,13 +136,7 @@ const App = () => {
             />
             <Route path="/subscription" element={<Subscription />} />
 
-            <Route
-              element={
-                <ProtectedRoute
-                  allowedRoles={["seller"]}
-                />
-              }
-            >
+            <Route element={<ProtectedRoute allowedRoles={["seller"]} />}>
               <Route element={<SellerLayout />}>
                 <Route path="/dashboard" element={<SellerDashboard />} />
                 <Route path="/seller-dashboard" element={<SellerDashboard />} />

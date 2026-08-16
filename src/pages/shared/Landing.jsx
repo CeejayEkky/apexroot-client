@@ -445,116 +445,194 @@ const Landing = () => {
       <footer className={s.footer}>
         <div className={s.container}>
           <div className={s.footerMainGrid}>
+            {/* ================= BRAND ================= */}
             <div className={s.footerBrand}>
               <div className={s.brandLogo}>
                 <div className={s.brandIcon}>
-                  <img src={ar} alt="brandIcon" />
+                  <img src={ar} alt="ApexRoot logo" />
                 </div>
               </div>
+
               <p className={s.brandDesc}>
                 The most trusted platform for buying, selling and renting
                 premium real estate globally. We make property hunting seamless.
               </p>
 
+              {/* SOCIAL LINKS */}
               <div className={s.socialIcons}>
-                {[FaFacebookF, RiTwitterXLine, FaInstagram, FaLinkedinIn].map(
-                  (Icon, idx) => (
-                    <a href="#" key={idx} className={s.socialIcon}>
-                      <Icon size={26} />
-                    </a>
-                  ),
-                )}
+                {/* Facebook */}
+                <a
+                  href="https://web.facebook.com/profile.php?id=61579169802414"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={s.socialIcon}
+                  aria-label="ApexRoot on Facebook"
+                >
+                  <FaFacebookF size={26} />
+                </a>
+
+                {/* X */}
+                <a
+                  href="https://x.com/ceejayekky"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={s.socialIcon}
+                  aria-label="ApexRoot on X"
+                >
+                  <RiTwitterXLine size={26} />
+                </a>
+
+                {/* Instagram */}
+                <a
+                  href="https://www.instagram.com/the_no1ceejay/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={s.socialIcon}
+                  aria-label="ApexRoot on Instagram"
+                >
+                  <FaInstagram size={26} />
+                </a>
+
+                {/* LinkedIn */}
+                <a
+                  href="https://www.linkedin.com/in/divinedestiny-ekwom-63690431b/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={s.socialIcon}
+                  aria-label="ApexRoot on LinkedIn"
+                >
+                  <FaLinkedinIn size={26} />
+                </a>
               </div>
             </div>
 
+            {/* ================= COMPANY ================= */}
             <div>
               <h4 className={s.footerHeading}>Company</h4>
+
               <ul className={s.footerLinks}>
                 <li>
-                  <a href="/" className={s.footerLink}>
+                  <Link to="/" className={s.footerLink}>
                     Home
-                  </a>
+                  </Link>
                 </li>
+
                 <li>
-                  <a href="/properties" className={s.footerLink}>
-                    Property
-                  </a>
+                  <Link to="/properties" className={s.footerLink}>
+                    Properties
+                  </Link>
                 </li>
+
                 <li>
-                  <a href="/wishlist" className={s.footerLink}>
+                  <Link to="/wishlist" className={s.footerLink}>
                     Wishlist
-                  </a>
+                  </Link>
                 </li>
+
                 <li>
-                  <a href="/contact" className={s.footerLink}>
+                  <Link to="/contact" className={s.footerLink}>
                     Contact
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>
 
-            {/* Column 3: Contact Info */}
+            {/* ================= SUPPORT ================= */}
             <div>
               <h4 className={s.footerHeading}>Support</h4>
+
               <ul className={s.footerLinks}>
                 <li className={s.contactInfo}>
-                  <HiMail className="text-primary text-xl" />{" "}
-                  contact@apexroot.com
+                  <HiMail className="text-primary text-xl" />
+
+                  <a
+                    href="mailto:ceejayekky@gmail.com"
+                    className={s.footerLink}
+                  >
+                    ceejayekky@gmail.com
+                  </a>
                 </li>
+
                 <li className={s.contactInfo}>
-                  <HiPhone className="text-primary text-xl" /> +234 1234567890
+                  <HiPhone className="text-primary text-xl" />
+
+                  <a href="tel:+2349113225710" className={s.footerLink}>
+                    +234 9113225710
+                  </a>
                 </li>
+
                 <li className={s.contactInfoStart}>
                   <HiLocationMarker
                     className={`text-primary ${s.contactIcon}`}
                   />
-                  123 Estate Street, Nigeria
+
+                  <span>Lagos, Nigeria</span>
                 </li>
               </ul>
             </div>
 
+            {/* ================= NEWSLETTER ================= */}
             <div>
               <h4 className={s.footerHeading}>Newsletter</h4>
+
               <p className={s.newsletterDesc}>
                 Subscribe to get the latest listings and market insights
                 directly in your inbox.
               </p>
+
               <div className={s.newsletterInputWrapper}>
                 <input
                   type="email"
                   placeholder="Enter Your Email"
                   className={s.newsletterInput}
                 />
-                <button className={s.newsletterButton}>Join</button>
+
+                <button type="button" className={s.newsletterButton}>
+                  Join
+                </button>
               </div>
             </div>
           </div>
 
+          {/* ================= BOTTOM BAR ================= */}
           <div className={s.bottomBar}>
             <div className={s.bottomBarFlex}>
               <p>
                 &copy; {new Date().getFullYear()} ApexRoot. All rights reserved.
               </p>
+
+              {/* LEGAL LINKS */}
               <div className={s.footerLegalLinks}>
-                <a href="#" className={s.footerLink}>
+                <Link to="/privacy-policy" className={s.footerLink}>
                   Privacy Policy
-                </a>
-                <a href="#" className={s.footerLink}>
+                </Link>
+
+                <Link to="/terms-of-service" className={s.footerLink}>
                   Terms of Service
-                </a>
-                <a href="#" className={s.footerLink}>
-                  Cookies Settings
-                </a>
+                </Link>
+
+                <Link to="/cookie-settings" className={s.footerLink}>
+                  Cookie Settings
+                </Link>
               </div>
             </div>
 
+            {/* ================= DESIGN CREDIT ================= */}
             <div className={s.designCredit}>
-              <img src={ar} alt="Logo" className={s.designLogo} />
+              <img src={ar} alt="ApexRoot logo" className={s.designLogo} />
+
               <span className="text-text-muted">Designed By</span>
 
-              <a href="http://jayport2.vercel.app/" target="_blank" className={s.designLink}>
-                Divinedestiny Chijioke Ekwom 
-              </a> | &nbsp;2026
+              <a
+                href="YOUR_PORTFOLIO_URL"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={s.designLink}
+              >
+                Divinedestiny Chijioke Ekwom
+              </a>
+
+              <span>| &nbsp;{new Date().getFullYear()}</span>
             </div>
           </div>
         </div>
