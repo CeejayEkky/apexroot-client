@@ -13,7 +13,7 @@ import {
   HiShieldCheck,
   HiVideoCamera,
 } from "react-icons/hi";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
 import axios from "axios";
 import ar from "../../assets/icologo.png";
@@ -458,7 +458,7 @@ const Landing = () => {
                 premium real estate globally. We make property hunting seamless.
               </p>
 
-              {/* SOCIAL LINKS */}
+              {/* SOCIAL LINkLinkS */}
               <div className={s.socialIcons}>
                 {/* Facebook */}
                 <a
@@ -495,7 +495,7 @@ const Landing = () => {
 
                 {/* LinkedIn */}
                 <a
-                  href="https://www.linkedin.com/in/divinedestiny-ekwom-63690431b/"
+                  href="https://www.linkLinkedin.com/in/divinedestiny-ekwom-63690431b/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className={s.socialIcon}
@@ -601,7 +601,7 @@ const Landing = () => {
                 &copy; {new Date().getFullYear()} ApexRoot. All rights reserved.
               </p>
 
-              {/* LEGAL LINKS */}
+              {/* LEGAL LINkLinkS */}
               <div className={s.footerLegalLinks}>
                 <Link to="/privacy-policy" className={s.footerLink}>
                   Privacy Policy
