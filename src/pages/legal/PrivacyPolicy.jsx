@@ -310,7 +310,7 @@ const PrivacyPolicy = () => {
           <div className="legal-contact-card">
             <strong>ApexRoot</strong>
             <span>Privacy & Support</span>
-            <a href="mailto:contact@apexroot.com">
+            <a href="mailto:ceejayekky300@gmail.com">
               ceejayekky300@gmail.com
             </a>
             <span>+234 9113225710</span>

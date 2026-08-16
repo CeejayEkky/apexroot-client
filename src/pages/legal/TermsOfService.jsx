@@ -374,7 +374,7 @@ const TermsOfService = () => {
             <strong>ApexRoot</strong>
             <span>Legal & Support</span>
 
-            <a href="mailto:contact@apexroot.com">
+            <a href="mailto:ceejayekky300@gmail.com">
               ceejayekky300@gmail.com
             </a>
 
