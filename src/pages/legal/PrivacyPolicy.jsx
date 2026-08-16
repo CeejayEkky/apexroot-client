@@ -249,7 +249,7 @@ const PrivacyPolicy = () => {
             className="legal-email"
             href="mailto:ceejayekky300@gmail.com"
           >
-            ceejayekky300@apexroot.com
+            ceejayekky300@gmail.com
           </a>
         </section>
 
