@@ -68,8 +68,6 @@ const SellerDashboard = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!token) return;
-
       try {
         setLoading(true);
 
@@ -93,11 +91,11 @@ const SellerDashboard = () => {
           }),
         ]);
 
-        const [statusResult, propertiesResult, inquiriesResult] = results;
-
-        // ==========================================
+        // =====================================================
         // DASHBOARD STATS
-        // ==========================================
+        // =====================================================
+
+        const statusResult = results[0];
 
         if (statusResult.status === "fulfilled") {
           console.log("DASHBOARD RESPONSE:", statusResult.value.data);
@@ -110,9 +108,11 @@ const SellerDashboard = () => {
           console.error("Dashboard stats failed:", statusResult.reason);
         }
 
-        // ==========================================
-        // PROPERTIES
-        // ==========================================
+        // =====================================================
+        // MY PROPERTIES
+        // =====================================================
+
+        const propertiesResult = results[1];
 
         if (propertiesResult.status === "fulfilled") {
           console.log("MY PROPERTIES RESPONSE:", propertiesResult.value.data);
@@ -123,12 +123,14 @@ const SellerDashboard = () => {
 
           setProperties(props);
         } else {
-          console.error("Properties failed:", propertiesResult.reason);
+          console.error("My properties failed:", propertiesResult.reason);
         }
 
-        // ==========================================
+        // =====================================================
         // INQUIRIES
-        // ==========================================
+        // =====================================================
+
+        const inquiriesResult = results[2];
 
         if (inquiriesResult.status === "fulfilled") {
           const data = inquiriesResult.value.data;
@@ -141,9 +143,9 @@ const SellerDashboard = () => {
                 : [],
           );
         } else {
-          console.warn("Inquiry request failed:", inquiriesResult.reason);
+          console.error("Inquiries failed:", inquiriesResult.reason);
 
-          // Don't break the dashboard because inquiries failed
+          // Don't destroy the dashboard because inquiries failed
           setInquiries([]);
         }
       } catch (error) {
@@ -153,7 +155,9 @@ const SellerDashboard = () => {
       }
     };
 
-    fetchData();
+    if (token) {
+      fetchData();
+    }
   }, [token]);
 
   /*
